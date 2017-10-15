@@ -5,13 +5,11 @@ import pl.tjanek.email.IntegrationSpec
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*
 import static java.lang.String.format
+import static pl.tjanek.email.EmailMessageBuilder.*
 import static pl.tjanek.email.endpoint.SendEmailStatus.NOT_SENT
 import static pl.tjanek.email.endpoint.SendEmailStatus.SENT
 
 class EmailEndpointIntegrationSpec extends IntegrationSpec {
-
-    static final Contact JOHN_DOE = new Contact("John Doe", "john.doe@company.com")
-    static final Contact JANE_DOE = new Contact("Jane Doe", "jane.doe@company.com")
 
     def 'should send email when mailGun server is available'() {
         given:
@@ -20,13 +18,17 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
                 'Greetings', 'Hello')
 
         and:
-            mailGunIsUp(message)
+            mailGunIsUp()
 
         when:
             Response response = post('/email/send', message)
 
         then:
+            verifyThatMailGunWasCalled(message)
+
+        and:
             messageWasSent(response)
+
     }
 
     def 'should not send email when mailGun server is failing to accept request'() {
@@ -36,13 +38,17 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
                 'Greetings', 'Hello')
 
         and:
-            mailGunIsFailing(message)
+            mailGunIsFailing()
 
         when:
             Response response = post('/email/send', message)
 
         then:
+            verifyThatMailGunWasCalled(message)
+
+        and:
             messageNotSent(response)
+
     }
 
     def 'should not send email when mailGun server is down'() {
@@ -55,7 +61,11 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
             Response response = post('/email/send', message)
 
         then:
+            verifyThatMailGunWasCalled(message)
+
+        and:
             messageNotSent(response)
+
     }
 
     void messageWasSent(Response response) {
@@ -68,12 +78,17 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
         assert response.as(SendEmailResponse).status == NOT_SENT
     }
 
-    void mailGunIsUp(EmailMessage message) {
-        stubFor(post(urlPathEqualTo("/mailgun-test"))
+    void verifyThatMailGunWasCalled(EmailMessage message) {
+        verify(postRequestedFor(urlEqualTo("/mailgun-test"))
                 .withQueryParam("from", equalTo(contactInfo(message.from)))
                 .withQueryParam("to", equalTo(contactInfo(message.to)))
                 .withQueryParam("subject", equalTo(message.subject))
                 .withQueryParam("text", equalTo(message.message))
+        )
+    }
+
+    void mailGunIsUp() {
+        stubFor(post(urlPathEqualTo("/mailgun-test"))
                 .willReturn(
                     aResponse()
                         .withStatus(200)
@@ -81,21 +96,13 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
         )
     }
 
-    void mailGunIsFailing(EmailMessage message) {
+    void mailGunIsFailing() {
         stubFor(post(urlPathEqualTo("/mailgun-test"))
-                .withQueryParam("from", equalTo(contactInfo(message.from)))
-                .withQueryParam("to", equalTo(contactInfo(message.to)))
-                .withQueryParam("subject", equalTo(message.subject))
-                .withQueryParam("text", equalTo(message.message))
                 .willReturn(
                     aResponse()
                         .withStatus(500)
                 )
         )
-    }
-
-    EmailMessage anEmailMessage(Contact from, Contact to, String subject, String message) {
-        return new EmailMessage(from, to, subject, message)
     }
 
     String contactInfo(Contact contact) {
