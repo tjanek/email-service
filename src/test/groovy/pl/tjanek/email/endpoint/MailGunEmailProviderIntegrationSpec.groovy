@@ -1,5 +1,6 @@
 package pl.tjanek.email.endpoint
 
+import com.github.tomakehurst.wiremock.client.BasicCredentials
 import com.jayway.restassured.response.Response
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock
 import pl.tjanek.email.IntegrationSpec
@@ -81,8 +82,9 @@ class MailGunEmailProviderIntegrationSpec extends IntegrationSpec {
 
     void verifyThatMailGunProviderWasUsed() {
         verify(postRequestedFor(urlPathEqualTo("/mailgun-test"))
-                .withQueryParam("from", equalTo("John+Doe+%3Cjohn.doe%40company.com%3E"))
-                .withQueryParam("to", equalTo("Jane+Doe+%3Cjane.doe%40company.com%3E"))
+                .withBasicAuth(new BasicCredentials("api", "key-12345"))
+                .withQueryParam("from", equalTo("John Doe <john.doe@company.com>"))
+                .withQueryParam("to", equalTo("Jane Doe <jane.doe@company.com>"))
                 .withQueryParam("subject", equalTo("Greetings"))
                 .withQueryParam("text", equalTo("Hello"))
         )
@@ -90,6 +92,7 @@ class MailGunEmailProviderIntegrationSpec extends IntegrationSpec {
 
     void mailGunProviderIsAvailable() {
         stubFor(post(urlPathEqualTo("/mailgun-test"))
+                .withBasicAuth("api", "key-12345")
                 .willReturn(
                     aResponse()
                         .withStatus(200)
@@ -99,6 +102,7 @@ class MailGunEmailProviderIntegrationSpec extends IntegrationSpec {
 
     void mailGunProviderIsFailing() {
         stubFor(post(urlPathEqualTo("/mailgun-test"))
+                .withBasicAuth("api", "key-12345")
                 .willReturn(
                     aResponse()
                         .withStatus(400)

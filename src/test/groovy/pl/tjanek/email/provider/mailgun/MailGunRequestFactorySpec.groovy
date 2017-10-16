@@ -12,7 +12,7 @@ class MailGunRequestFactorySpec extends Specification {
     @Subject
     MailGunRequestFactory factory = new MailGunRequestFactory(MAILGUN_URL)
 
-    def 'should create request url for sending email message to mailgun'() {
+    def 'should create request url with not encoded query param values'() {
         given:
             MailGunRequestParams requestParams = aRequestParams()
 
@@ -21,10 +21,10 @@ class MailGunRequestFactorySpec extends Specification {
 
         then:
             requestUrl == 'mailgun-url' +
-                          '?from=John+Doe+%3Cjohn.doe%40company.com%3E' +
-                          '&to=Jane+Doe+%3Cjane.doe%40company.com%3E' +
-                          '&subject=Some+subject' +
-                          '&text=Some+message'
+                          '?from=John Doe <john.doe@company.com>' +
+                          '&to=Jane Doe <jane.doe@company.com>' +
+                          '&subject=Some subject' +
+                          '&text=Some message'
     }
 
     MailGunRequestParams aRequestParams() {

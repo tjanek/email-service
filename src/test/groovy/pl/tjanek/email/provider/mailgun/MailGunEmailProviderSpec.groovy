@@ -1,5 +1,7 @@
 package pl.tjanek.email.provider.mailgun
 
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
@@ -7,6 +9,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
 
+import static org.springframework.http.HttpMethod.POST
 import static org.springframework.http.HttpStatus.BAD_REQUEST
 import static org.springframework.http.HttpStatus.CREATED
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
@@ -72,13 +75,11 @@ class MailGunEmailProviderSpec extends Specification {
     }
 
     void mailGunServiceRespond(String url, Object result) {
-        Object EMPTY_PAYLOAD = null
-        restClient.postForEntity(url, EMPTY_PAYLOAD, Object) >> result
+        restClient.exchange(url, POST, (HttpEntity)_, Object) >> result
     }
 
     void mailGunServiceNotResponding(String url) {
-        Object EMPTY_PAYLOAD = null
-        restClient.postForEntity(url, EMPTY_PAYLOAD, Object) >> new RuntimeException()
+        restClient.exchange(url, POST, (HttpEntity)_, Object) >> new RuntimeException()
     }
 
     void mailGunServiceIsAvailableAt(Object url) {

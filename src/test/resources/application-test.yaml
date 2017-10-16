@@ -1,2 +1,3 @@
 mailgun:
   url: http://localhost:8020/mailgun-test
+  api-key: key-12345
