@@ -20,35 +20,35 @@ class MailGunRequestParamsSpec extends Specification {
 
     def 'should get contact \'to\' info from email message'() {
         given:
-        EmailMessage message =  anEmailMessage()
+            EmailMessage message =  anEmailMessage()
 
         when:
-        MailGunRequestParams params = new MailGunRequestParams(message)
+            MailGunRequestParams params = new MailGunRequestParams(message)
 
         then:
-        params.to == 'Jane Doe <jane.doe@company.com>'
+            params.to == 'Jane Doe <jane.doe@company.com>'
     }
 
     def 'should get contact \'subject\' info from email message'() {
         given:
-        EmailMessage message =  anEmailMessage()
+            EmailMessage message =  anEmailMessage()
 
         when:
-        MailGunRequestParams params = new MailGunRequestParams(message)
+            MailGunRequestParams params = new MailGunRequestParams(message)
 
         then:
-        params.subject == 'Some subject'
+            params.subject == 'Some subject'
     }
 
     def 'should get contact \'text\' info from email message'() {
         given:
-        EmailMessage message =  anEmailMessage()
+            EmailMessage message =  anEmailMessage()
 
         when:
-        MailGunRequestParams params = new MailGunRequestParams(message)
+            MailGunRequestParams params = new MailGunRequestParams(message)
 
         then:
-        params.text == 'Some message'
+            params.text == 'Some message'
     }
 
 }
