@@ -1,2 +1,2 @@
 mailgun:
-  url: mailgun-test
+  url: http://localhost:8020/mailgun-test

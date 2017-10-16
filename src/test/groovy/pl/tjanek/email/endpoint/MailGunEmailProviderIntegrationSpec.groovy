@@ -1,57 +1,58 @@
 package pl.tjanek.email.endpoint
 
 import com.jayway.restassured.response.Response
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock
 import pl.tjanek.email.IntegrationSpec
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*
-import static java.lang.String.format
 import static pl.tjanek.email.EmailMessageBuilder.*
 import static pl.tjanek.email.endpoint.SendEmailStatus.NOT_SENT
 import static pl.tjanek.email.endpoint.SendEmailStatus.SENT
 
-class EmailEndpointIntegrationSpec extends IntegrationSpec {
+@AutoConfigureWireMock(port = 8020)
+class MailGunEmailProviderIntegrationSpec extends IntegrationSpec {
 
-    def 'should send email when mailGun server is available'() {
+    def 'should send email when mailGun provider is available'() {
         given:
+            mailGunProviderIsAvailable()
+
+        and:
             EmailMessage message = anEmailMessage(
                 JOHN_DOE, JANE_DOE,
                 'Greetings', 'Hello')
-
-        and:
-            mailGunIsUp()
 
         when:
             Response response = post('/email/send', message)
 
         then:
-            verifyThatMailGunWasCalled(message)
+            verifyThatMailGunProviderWasUsed()
 
         and:
             messageWasSent(response)
 
     }
 
-    def 'should not send email when mailGun server is failing to accept request'() {
+    def 'should not send email when mailGun provider is failing to accept request'() {
         given:
+            mailGunProviderIsFailing()
+
+        and:
             EmailMessage message = anEmailMessage(
                 JOHN_DOE, JANE_DOE,
                 'Greetings', 'Hello')
-
-        and:
-            mailGunIsFailing()
 
         when:
             Response response = post('/email/send', message)
 
         then:
-            verifyThatMailGunWasCalled(message)
+            verifyThatMailGunProviderWasUsed()
 
         and:
             messageNotSent(response)
 
     }
 
-    def 'should not send email when mailGun server is down'() {
+    def 'should not send email when mailGun provider is down'() {
         given:
             EmailMessage message = anEmailMessage(
                 JOHN_DOE, JANE_DOE,
@@ -61,7 +62,7 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
             Response response = post('/email/send', message)
 
         then:
-            verifyThatMailGunWasCalled(message)
+            verifyThatMailGunProviderWasUsed()
 
         and:
             messageNotSent(response)
@@ -78,16 +79,16 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
         assert response.as(SendEmailResponse).status == NOT_SENT
     }
 
-    void verifyThatMailGunWasCalled(EmailMessage message) {
-        verify(postRequestedFor(urlEqualTo("/mailgun-test"))
-                .withQueryParam("from", equalTo(contactInfo(message.from)))
-                .withQueryParam("to", equalTo(contactInfo(message.to)))
-                .withQueryParam("subject", equalTo(message.subject))
-                .withQueryParam("text", equalTo(message.message))
+    void verifyThatMailGunProviderWasUsed() {
+        verify(postRequestedFor(urlPathEqualTo("/mailgun-test"))
+                .withQueryParam("from", equalTo("John+Doe+%3Cjohn.doe%40company.com%3E"))
+                .withQueryParam("to", equalTo("Jane+Doe+%3Cjane.doe%40company.com%3E"))
+                .withQueryParam("subject", equalTo("Greetings"))
+                .withQueryParam("text", equalTo("Hello"))
         )
     }
 
-    void mailGunIsUp() {
+    void mailGunProviderIsAvailable() {
         stubFor(post(urlPathEqualTo("/mailgun-test"))
                 .willReturn(
                     aResponse()
@@ -96,17 +97,13 @@ class EmailEndpointIntegrationSpec extends IntegrationSpec {
         )
     }
 
-    void mailGunIsFailing() {
+    void mailGunProviderIsFailing() {
         stubFor(post(urlPathEqualTo("/mailgun-test"))
                 .willReturn(
                     aResponse()
-                        .withStatus(500)
+                        .withStatus(400)
                 )
         )
-    }
-
-    String contactInfo(Contact contact) {
-        return format("%s <%s>", contact.name, contact.email)
     }
 
 }

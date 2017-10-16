@@ -6,7 +6,6 @@ import com.jayway.restassured.parsing.Parser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.embedded.LocalServerPort
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import spock.lang.Specification
@@ -17,7 +16,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @ActiveProfiles(["test"])
 @SpringBootTest(webEnvironment=RANDOM_PORT)
 @ContextConfiguration
-@AutoConfigureWireMock(port = 0)
 abstract class IntegrationSpec extends Specification {
 
     @Autowired
